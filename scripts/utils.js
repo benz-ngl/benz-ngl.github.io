@@ -226,8 +226,8 @@ const mergeData = (data, q = '', now = new Date()) => Object.assign(data, {
 
 const escapeHTML = (s) => s?.toString()
     .replaceAll('&', '&amp;')
-    .replaceAll('>', '&gt;') || '◘'
-    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('<', '&lt;') || '◘'
 
 function getBrowserName(nav = navigator) {
     const ua = nav.userAgent
@@ -248,7 +248,6 @@ function getBrowserName(nav = navigator) {
         : isSafari ? "Safari"
         : isIE ? "Internet Explorer"
         : "Unknown"
-
 }
 
 function getBrowserVersion(browser, ua = navigator.userAgent) {

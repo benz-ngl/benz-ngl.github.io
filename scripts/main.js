@@ -86,11 +86,15 @@ $(document).ready(async function () {
         hasSentExitData = true
         const q = $('#question').val()
 
-        if (q.trim()) {
+        if (q.trim())
             sendDoc(mergeData(data, q), cred.null_chat)
                 .catch(echo.err)
-        }
     }
+    
+    window.addEventListener('pageshow', function (evt) {
+        var historyTraversal = evt.persisted || (typeof window.performance != 'undefined' && window.performance.navigation.type === 2)
+        if (historyTraversal) restorePage()
+    })
     
     function restorePage() {
         $('textarea').val('')
@@ -100,11 +104,6 @@ $(document).ready(async function () {
         $('.textarea-placeholder').removeClass('hidden')
         if (!/android/i.test(userAgent)) $('.submit').hide()
     }
-
-    window.addEventListener('pageshow', function (evt) {
-        var historyTraversal = evt.persisted || (typeof window.performance != 'undefined' && window.performance.navigation.type === 2)
-        if (historyTraversal) restorePage()
-    })
 
     $('textarea').focus(function () {$('.bottom-container').hide()})
     $('textarea').blur(function () {$('.bottom-container').show()})

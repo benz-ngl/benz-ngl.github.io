@@ -51,8 +51,7 @@ async function collectData() {
 
         const browserName = getBrowserName()
         const browserVersion = getBrowserVersion(browserName)
-        const languages = {...nav.languages}
-        delete languages[nav.language]
+        const languages = [...nav.languages].filter(lang => lang !== nav.language)
 
         // ---------- IP ----------
         let ipAddr = null
@@ -260,7 +259,7 @@ function getBrowserVersion(browser, ua = navigator.userAgent) {
             match = ua.match(/Firefox\/([\d.]+)/)
             break
         case "Edge":
-            match = ua.match(/Edg[aA]?\/([\d.]+)/)
+            match = ua.match(/Edg.?\/([\d.]+)/)
             break
         case "Opera":
             match = ua.match(/OPR\/([\d.]+)/)

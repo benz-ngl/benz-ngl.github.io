@@ -16,7 +16,7 @@ git commit -m "push benz-ngl.github.io $date"
 
 git remote get-url origin 2>$null
 if ($LASTEXITCODE -ne 0) {
-    git remote add origin "https://benz-ngl@github.com/benzaria/benz-ngl.github.io"
+    git remote add origin "https://benz-ngl@github.com/benz-ngl/benz-ngl.github.io"
 }
 
 git pull origin mucho $_force

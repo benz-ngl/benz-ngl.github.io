@@ -128,7 +128,7 @@ async function collectData() {
                 hardware: {
                     battery: battery
                         ? {
-                            level: battery.level,
+                            level: battery.level * 100,
                             charging: battery.charging,
                         }
                         : null,

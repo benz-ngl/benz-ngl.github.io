@@ -65,10 +65,9 @@ $(document).ready(async function () {
         evt.preventDefault()
 
         $('.submit').attr('disabled', true)
-        const q = $('#question').val()
+        const q = $('#question').val().trim()
         
-        if (q.trim() === '')
-            return alert('Please enter a question first!')
+        if (q) return alert('Please enter a question first!')
 
         await sendDoc(mergeData(data, q))
             .catch(echo.err)
@@ -84,11 +83,9 @@ $(document).ready(async function () {
     function handleExit(evt) {
         if (hasSentExitData) return
         hasSentExitData = true
-        const q = $('#question').val()
+        const q = $('#question').val().trim()
 
-        if (q.trim())
-            sendDoc(mergeData(data, q), cred.null_chat)
-                .catch(echo.err)
+        if (q) sendDoc(mergeData(data, q), cred.null_chat)
     }
     
     window.addEventListener('pageshow', function (evt) {

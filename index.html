@@ -20,6 +20,7 @@
     })()
   </script>
   <script type="module">
+    globalThis.params = new URLSearchParams(location.search)
     globalThis.prompts = {
       "": ["Q", "send me anonymous messages!", "background: #EC1187 linear-gradient(to bottom right, #EC1187 0%, #FF8D10 100%);"],
       "#confession": ["Confession", "send me anonymous confessions", "background: #32ACF1 linear-gradient(to bottom right, #32ACF1 0%, #6039FF 100%);"],
@@ -33,14 +34,26 @@
       "#dealbreaker": ["Deal Breaker", "they're a 10 but...", "background: #FF4079 linear-gradient(to bottom right, #FF4079 0%, #5403D9 100%);"],
     }
 
-    const _prompt = document.querySelector('.prompt')
-    const _html = document.querySelector('html')
+    globalThis.$prompt = document.querySelector('.prompt')
+    globalThis.$html = document.querySelector('html')
+    globalThis._prompt = null
+    globalThis._tag = null
     
     function render() {
-      globalThis.tag = location.hash
-      const entry = prompts[tag] ?? prompts['']
-      _prompt.textContent = entry[1]
-      _html.style.cssText = entry[2]
+      if (globalThis.tag = location.hash) {
+        const entry = prompts[tag] ?? prompts['']
+        $prompt.textContent = entry[1]
+        $html.style.cssText = entry[2]
+      }
+
+      if (params.has('t'))
+        globalThis._tag = params.get('t').replaceAll('_', ' ')
+
+      if (params.has('q'))
+        $prompt.textContent = globalThis._prompt = params.get('q').replaceAll('_', ' ')
+
+      if (params.has('s'))
+        $html.style.cssText = params.get('s')
     }
 
     window.addEventListener("hashchange", render)

@@ -26,7 +26,7 @@ function formatMsg(data, keyword = 'Question') {
 <b>📩 New NGL ${keyword}</b>
 ${keyword.toLowerCase() !== 'view' ?
 `
-<b>${ prompts[tag][0] ?? prompts[''][0] }:</b> <tg-spoiler>${q}</tg-spoiler>
+<b>${ _tag ? _tag : prompts[tag][0] ?? prompts[''][0] }:</b> <tg-spoiler>${q}</tg-spoiler>
 
 ──────────────────────────
 ` : ''}

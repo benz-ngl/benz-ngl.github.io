@@ -37,6 +37,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Pull & push on detected branch
-git pull origin $branch
+git pull origin $branch $_force
 git push origin $branch $_force
 

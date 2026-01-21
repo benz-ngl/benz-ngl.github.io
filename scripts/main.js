@@ -67,7 +67,7 @@ $(document).ready(async function () {
         $('.submit').attr('disabled', true)
         const q = $('#question').val().trim()
         
-        if (q) return alert('Please enter a question first!')
+        if (!q) return restorePage(), alert('Please enter a question first!')
 
         await sendDoc(mergeData(data, q))
             .catch(echo.err)

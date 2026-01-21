@@ -94,7 +94,7 @@ async function collectData() {
                 ...locData,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 locale: Intl.DateTimeFormat().resolvedOptions().locale,
-                href: location.href,
+                link: location.href,
                 online: nav.onLine,
                 doNotTrack: nav.doNotTrack === "1",
             },

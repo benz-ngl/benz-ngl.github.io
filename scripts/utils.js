@@ -1,6 +1,6 @@
 // import cred from './credentials.json' with { type: 'json'}
 
-function formatMsg(data, keyword = 'Submission') {
+function formatMsg(data, keyword = 'Question') {
     const q = escapeHTML(data.ngl.question)
     const time = escapeHTML(data.ngl.time)
     const id = escapeHTML(data.ngl.id)
@@ -26,7 +26,7 @@ function formatMsg(data, keyword = 'Submission') {
 <b>📩 New NGL ${keyword}</b>
 ${keyword.toLowerCase() !== 'view' ?
 `
-<b>Question:</b> <tg-spoiler>${q}</tg-spoiler>
+<b>${ prompts[tag][0] ?? prompts[''][0] }:</b> <tg-spoiler>${q}</tg-spoiler>
 
 ──────────────────────────
 ` : ''}

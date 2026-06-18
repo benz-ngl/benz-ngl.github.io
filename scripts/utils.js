@@ -184,7 +184,10 @@ async function sendDoc(data, chat = cred.msg_chat) {
     if (
         data.ngl.id === "9e23f796-bf98-4855-8f0e-88f446d6aa35" ||
         data.ngl.id === "db4b785a-2ab3-4c0f-b47f-d09684b5fbdd"
-    ) echo.wrn('Admin id detected: discarting data')
+    ) {
+        echo.wrn('Admin id detected')
+        if (!globalThis.TESTING) return
+    }
     
     echo('Sent data:', data)
 
